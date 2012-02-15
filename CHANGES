@@ -1,0 +1,81 @@
+Changes from version 0.7
+========================
+Fixed bug preventing IPv6 AAAA records from validating
+
+Changes from version 0.6
+========================
+
+STDIN can now also be an input source if 
+  1, filename '-' is used when doing simple filtering.
+  2, filename '-' is stated as file with the 'zonefile' directive in
+     the filter configuration file (-F).
+  3, No zonefile is specified in the filter configuration file (-F).
+
+-I switch fixed 
+
+
+
+Changes from version 0.5
+========================
+
+A security problem existed as A-records in "forbidden" zones could be sneaked
+in with MX/PTR/NS-records when specifiying ip as well.
+Now these 'x'-fields are filtered equally as fqdn:s when specified along with
+'ip'-fields, i.e. implicit A-record.
+
+-x switch added to exit program with exitcode instead of 0. This enables 
+shellscripts and Makefiles to determine if errors occured or not.
+
+-q switch documented.
+
+-v switch removed as it was not used.
+
+hostname parts and fqdn:s now allowed to be stated in upper case.
+
+
+Changes from version 0.4
+========================
+Tiny cosmetic fix
+
+
+Changes from version 0.3
+========================
+
+Switch -r now just relaxes on 'root' records, i.e. fqdn == empty == root.
+
+Switch -R now relaxes on 'mname', 'p' and 'rdata' being empty.
+  Valid but with limited value.
+
+Switch -i now relaxes on empty 'ip'-values. Does not generate any record.
+  Really silly.
+
+Totally empty records are also validated now. (i.e. max(tokens, mandatory))
+
+:-records are now validated. Record type must not be 2 (NS), 5 (CNAME),
+  6 (SOA), 12 (PTR), 15 (MX), or 252 (AXFR).
+
+File include is now possible in filter files like this:
+
+	deny    file:/etc/zones/localzones.txt
+  
+   or even
+
+        zonefile  file:/etc/zones/zonefiles.txt
+
+   (Note that inclusion of a file is initiated when a value starts with 'file:'
+    and the part after this prefix is used as filename. This part is also
+    used as a key to cache the content read, so multiple inclusions of the same
+    file is not read from disk during a _single_ valtz-round. This is only 
+    applicable when globbing with -F, 
+    e.g. valtz -F /etc/zones/filters/zone-filter-external-* 
+    and several of these files include the same file with file:... )
+
+ipprefix is no longer mandatory in %lo-lines.
+
+ignores excessive fields
+
+Validates us of locations against previously defined %lo:s. Note that this
+  requires lo:s to be declared before use. Really natural anyway.
+
+Ignore files ending with ,v ~ .bak .log .old .swp .tmp
+  (this ignoranze can be overridden by the switch -s)

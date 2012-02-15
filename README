@@ -1,0 +1,147 @@
+
+valtz 0.7, ; (C) 2012 Kurt Nelson, http://github.com/kurtisnelson/valtz (C) 2003 Magnus Bodin, http://x42.com/software/ 
+============================================================
+
+Validation tool for tinydns-data zone files.
+
+Usage:
+
+  Simple validation:
+    valtz [-qrRix] <zonefiles>
+
+  Simple filtering:
+    valtz -f[qrRiItTx] <zonefiles>
+
+  Extensive filtering:
+    valtz -F[qrRiItTx] <filterfiles>
+
+General usage:
+    valtz [-hfFqrRiItTx] <file(s)>
+
+  -h shows this help.
+
+
+  -f filter (don't just validate) file and output accepted lines to STDOUT.
+     
+
+  -F treat files as filter configuration files for more advanced filtering.
+     These filterfiles one or several of the following filter directives:
+
+     zonefile <zonefilepath>
+     zonefile file:<path to textfile including zonefilepaths>
+        Defines the file(s) to be filtered. Can be a globbed value, like
+        /var/zones/external/*
+
+     extralog <logfile>
+        Defines an extra logfile that the STDERR output will be copied for
+        this specific filterfile. Useful if you have a lot of filterfiles
+        and want to separate the logs.
+
+     deny <zonepattern>
+     deny file:<path to <zonepatternfile>
+        Defines a zonepattern to explicitly DENY after implicitly allowing all.
+        (cannot be combined with allow)
+
+     allow <zonepattern>
+     allow file:<path to <zonepatternfile>
+        Defines a zonepattern to explicitly ALLOW after implicitly denying all.
+
+     allowtype <recordtype character(s)>
+        Explicitly sets the allowed recordtypes. Note that even comments
+        has to be allowed (but these will not result in errors unless -t)
+        to be copied to the output.
+
+     Multiple zonefile, allow- and deny-lines are allowed, but also the
+     alternative file:-line that points to a textfile containing one
+     value per line.
+    
+    
+  -r allows fqdn to be empty thus denoting the root.
+     This is also allowed per default when doing implict allow - see deny,
+     or when specifying 'allow .', i.e. explictly allowing root as such.
+     (cannot be combined with deny)
+
+     
+  -R relaxes the validation and allows empty mname and p-fields.xi
+     This is probably not very useful.
+
+     
+  -i allows the ip-fields to be empty as well. These will then not generate any
+     records.
+
+
+  -I Include rejected lines as comments in output (valid when filtering).
+
+ 
+  -q Do not echo valid lines to STDOUT.
+    
+  -s DO NOT ignore files ending with ,v ~ .bak .log .old .swp .tmp
+     which is done per default.
+
+
+  -t Give error even on #comment-lines when they are not allowed.
+     (These errors are silently ignored per default)
+
+
+  -T<types>
+     A commandline way to explicitly set the allowed recordtypes.
+     This is _concatenated_ to the allowtype-allowed recordtypes.
+
+  -x Exit with non-null exit code on errors; i.e. make errors detectable by
+     e.g. shell scripts; 1 = validation error, 2 = permission error,
+     3 = combination of 1 and 2.
+
+
+
+All errors in the zonefiles are sent to STDERR.
+
+     Example; simple use:
+       valtz zone-bodin-org
+
+     Example; simple filter-use;
+       valtz -f /etc/zones/zone-* 
+                >/etc/tinydns/data.filtered 
+                2>/var/log/tinydns/valtz.log
+
+     Example; filterfile use;
+       valtz -F /etc/zones/filter/zones-otto 
+                >/etc/tinydns/data.otto 
+                2>/var/log/tinydns/valtz.log
+
+                
+     Example filterfile for using as import from primary (as above):
+       zonefile   /var/zones/external/otto/zone-*
+       deny       bodin.org
+       deny       x42.com
+       extralog   /var/log/tinydns/external-otto.log    
+
+     Example #2, strict filter for a certain user editing just A-records
+
+       zonefile  /home/felix/zones/zone-fl3x-net
+       allow     fl3x.net
+       allowtype + 
+       extralog  /var/log/tinydns/fl3x-net.log
+
+     Example #3, export filter to secondary
+
+       zonefile  /var/zones/primary/zone-*
+       # just allow OUR zones to be exported, not to annoy secondary partner
+       allow     file:/var/zones/primary-zones.txt
+       # don't allow any other types than this; e.g. comments won't be exported
+       allowtype Z + @ . C
+       extralog  /var/log/tinydns/primary-export.log
+
+     Example #4, /etc/zones/minimalistic-filterfile
+       
+       deny file:/etc/zones/primary-zones.txt
+       allowtype Z + @ . C
+
+       and on the commandline;
+
+        ssh remote.example.org cat /etc/export-zones.txt | \
+	    valtz -F /etc/zones/minimalistic-filterfile \
+	    >/etc/tinydns/remote.example.org-data \
+	    2>/var/log/remote.example.org-zones.log
+
+
+Please mail comments and errors and general feedback to <kurtisnelson@gmail.com>.
